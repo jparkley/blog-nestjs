@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Journal, JournalStatus } from './interfaces/journal.interface';
 import { v1 as uuid } from 'uuid';
 import { CreateJournalDto } from './dto/create-journal.dto';
+import { GetJournalsFilterDto } from './dto/get-journals-filter';
 
 @Injectable()
 export class JournalsService {
@@ -19,8 +20,36 @@ export class JournalsService {
     return this.journals;
   }
 
+  getFilteredJournals(filterDto: GetJournalsFilterDto): Journal[] {
+    let journals = this.getJournals(); // First, get all journals
+    const { status, text } = filterDto;
+
+    if (status) {
+      journals = journals.filter((journal) => journal.status === status);
+    }
+
+    if (text) {
+      journals = journals.filter((journal) => {
+        if (
+          journal.title
+            .toLocaleLowerCase()
+            .includes(text.toLocaleLowerCase()) ||
+          journal.content.toLocaleLowerCase().includes(text.toLocaleLowerCase())
+        ) {
+          return true;
+        }
+        return false;
+      });
+    }
+    return journals;
+  }
+
   getJournal(id: string): Journal {
-    return this.journals.find((journal) => journal.id === id);
+    const found = this.journals.find((journal) => journal.id === id);
+    if (!found) {
+      throw new NotFoundException();
+    }
+    return found;
   }
 
   createJournal(createJournalDto: CreateJournalDto): Journal {
@@ -46,6 +75,10 @@ export class JournalsService {
   }
 
   deleteJournal(id: string): void {
-    this.journals = this.journals.filter((journal) => journal.id !== id);
+    const found = this.getJournal(id);
+    if (!found) {
+      throw new NotFoundException();
+    }
+    this.journals = this.journals.filter((journal) => journal.id !== found.id);
   }
 }
