@@ -1,12 +1,12 @@
-export interface Post {
+export interface Journal {
   id: string;
   title: string;
   content: string;
-  status: PostStatus;
+  status: JournalStatus;
   likes: number;
 }
 
-export enum PostStatus {
+export enum JournalStatus {
   PUBLIC = 'PUBLIC',
   PRIVATE = 'PRIVATE',
 }
